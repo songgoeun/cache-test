@@ -1,0 +1,50 @@
+name: Caching with PR
+
+on:
+  pull_request:
+    branches:
+      - "**"
+
+jobs:
+  pr_check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+
+      - name: npm cache
+        uses: actions/cache@v3
+        id: npm-cache
+        env:
+          cache-name: cache-node-modules
+        with:
+          #path: ~/.npm
+          path: "**/node_modules"
+          key: ${{ runner.os }}-node-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ env.cache-name }}-
+            ${{ runner.os }}-node-
+            ${{ runner.os }}-
+
+      - if: steps.npm-cache.outputs.cache-hit == 'true'
+        run: echo 'npm cache hit!'
+      - if: steps.npm-cache.outputs.cache-hit != 'true'
+        run: echo 'npm cache missed!'
+
+      - name: Install Dependencies
+        if: steps.npm-cache.outputs.cache-hit != 'true'
+        run: npm install
+
+      - name: Checking Lint
+        run: npm run lint
+
+      - name: Checking Build
+        run: npm run build
