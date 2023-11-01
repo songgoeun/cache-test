@@ -21,4 +21,4 @@ jobs:
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.RTM_READ_KEY }}" > ~/.npmrc
       - run: npm install
       - run: npm run build --if-present
-#
+# test
